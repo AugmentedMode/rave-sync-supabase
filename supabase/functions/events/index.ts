@@ -26,6 +26,12 @@ const supabaseClient = createClient(
   Deno.env.get("SUPABASE_ANON_KEY") || ''
 );
 
+// Create Supabase admin client using the Service Role Key for admin operations
+const supabaseAdminClient = createClient(
+  Deno.env.get("SUPABASE_URL") || '',
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || '' // Use the Service Role Key here
+);
+
 // Get API key from environment variables
 const API_KEY = Deno.env.get("x-api-key");
 
@@ -107,8 +113,8 @@ async function handleCreateEvent(req: Request) {
       return badRequestResponse("Missing required fields: name, date_start, date_end");
     }
 
-    // Insert event
-    const { data, error } = await supabaseClient
+    // Insert event using the admin client
+    const { data, error } = await supabaseAdminClient
       .from("events")
       .insert([{
         name,
@@ -316,7 +322,8 @@ async function handleUpdateEvent(req: Request) {
       delete updates.created_by;
     }
 
-    const { data, error } = await supabaseClient
+    // Use the admin client for the update operation
+    const { data, error } = await supabaseAdminClient
       .from("events")
       .update(updates)
       .eq("id", eventId)
@@ -353,7 +360,8 @@ async function handleDeleteEvent(req: Request) {
       return badRequestResponse("Missing event ID");
     }
 
-    const { error } = await supabaseClient
+    // Use the admin client for the delete operation
+    const { error } = await supabaseAdminClient
       .from("events")
       .delete()
       .eq("id", eventId);
